@@ -31,18 +31,27 @@ fn main() {
 
     match input.trim() {
         "1" => {
-            // Create a genesis block and mine two more blocks
-            // Difficulty 4 = hash must start with "0000" (~65,000 guesses on average)
+            // Create a chain as a Vec (dynamic array) of blocks
             let difficulty = 4;
-            let genesis = create_genesis_block();
-            let block1 = create_block(&genesis, "Alice pays Bob 10 BTC", difficulty);
-            let block2 = create_block(&block1, "Bob pays Carol 5 BTC", difficulty);
-            println!("\nChain of 3 blocks created with difficulty {}!", difficulty);
+            let mut chain: Vec<Block> = Vec::new();
+
+            // Genesis block goes in first
+            chain.push(create_genesis_block());
+
+            // Mine two more blocks — each links to the last block in the chain
+            // chain.last().unwrap() gets a reference to the most recent block
+            chain.push(create_block(chain.last().unwrap(), "Alice pays Bob 10 BTC", difficulty));
+            chain.push(create_block(chain.last().unwrap(), "Bob pays Carol 5 BTC", difficulty));
+
+            println!("\nChain of {} blocks created!", chain.len());
+
+            // Validate the whole chain
+            validate_chain(&chain, difficulty);
         }
         "2" => { todo!("Interactive mining not wired up yet") }
         "3" => add_transaction(),
-        "4" => view_chain(),
-        "5" => validate_chain(),
+        "4" => view_chain(&Vec::new()),
+        "5" => { todo!("Need a chain to validate") }
         "6" => save_chain(),
         "7" => load_chain(),
         "8" => println!("Goodbye!"),
@@ -146,14 +155,64 @@ fn validate_block() {
 
 // === Chain ===
 
-fn view_chain() {
-    // Print all blocks in the chain with their key fields
-    todo!()
+fn view_chain(chain: &Vec<Block>) {
+    // Print all blocks in the chain
+    println!("\n=== BLOCKCHAIN ({} blocks) ===\n", chain.len());
+    for block in chain {
+        println!("Block {}", block.index);
+        println!("  Timestamp: {}", block.timestamp);
+        println!("  Data: {}", block.data);
+        println!("  Nonce: {}", block.nonce);
+        println!("  Prev hash: {}...", &block.previous_hash[..16.min(block.previous_hash.len())]);
+        println!("  Hash: {}...", &block.hash[..16]);
+        println!();
+    }
 }
 
-fn validate_chain() {
-    // Walk from genesis to tip, validate every block and every link
-    todo!()
+fn validate_chain(chain: &Vec<Block>, difficulty: usize) {
+    // Walk every block and verify three things:
+    // 1. The stored hash actually matches the block's contents
+    // 2. The previous_hash matches the prior block's hash (the chain link)
+    // 3. The hash satisfies the difficulty requirement (proof of work)
+
+    let target = "0".repeat(difficulty);
+    let mut valid = true;
+
+    for i in 0..chain.len() {
+        let block = &chain[i];
+
+        // Check 1: Recompute the hash — does it match what's stored?
+        // If someone changed the data, the recomputed hash won't match
+        let recomputed = hash_block(
+            block.index, block.timestamp,
+            &block.previous_hash, &block.data, block.nonce,
+        );
+        if recomputed != block.hash {
+            println!("INVALID: Block {} hash doesn't match!", i);
+            valid = false;
+        }
+
+        // Check 2: Does previous_hash link to the actual previous block?
+        // Skip block 0 (genesis has no predecessor)
+        if i > 0 {
+            let prev_block = &chain[i - 1];
+            if block.previous_hash != prev_block.hash {
+                println!("INVALID: Block {} previous_hash doesn't match Block {}!", i, i - 1);
+                valid = false;
+            }
+        }
+
+        // Check 3: Does the hash meet the difficulty requirement?
+        // A valid mined block's hash must start with N zeros
+        if i > 0 && !block.hash.starts_with(&target) {
+            println!("INVALID: Block {} doesn't meet difficulty {}!", i, difficulty);
+            valid = false;
+        }
+    }
+
+    if valid {
+        println!("\nChain is VALID — all {} blocks verified.", chain.len());
+    }
 }
 
 // === Mining ===
