@@ -40,7 +40,17 @@ Learning project — building a toy blockchain from scratch to understand how Bi
 - Using `sha2` and `hex` crates (same as wallet project)
 - No GitHub remote yet
 
+**What I built (continued)**:
+- `Vec<Block>` chain storage — blocks stored in a dynamic array instead of loose variables
+- `view_chain` — prints all blocks with their fields
+- `validate_chain` — walks the chain checking 3 things per block:
+  1. Recompute hash from fields — does it match the stored hash?
+  2. Does previous_hash match the actual previous block's hash?
+  3. Does the hash satisfy the difficulty requirement (leading zeros)?
+- `chain.last().unwrap()` to reference the most recent block when appending
+- `.min()` to safely slice short strings (genesis block's previous_hash is just "0")
+
 **Next session**:
-- Chain validation — verify all links and hashes are correct
+- REVIEW: Walk through validate_chain code in detail (haven't reviewed it yet)
 - Transactions struct and Merkle root
 - Persistence (save/load chain)
