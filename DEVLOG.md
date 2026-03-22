@@ -51,6 +51,61 @@ Learning project — building a toy blockchain from scratch to understand how Bi
 - `.min()` to safely slice short strings (genesis block's previous_hash is just "0")
 
 **Next session**:
-- REVIEW: Walk through validate_chain code in detail (haven't reviewed it yet)
-- Transactions struct and Merkle root
-- Persistence (save/load chain)
+- ~~REVIEW: Walk through validate_chain code in detail (haven't reviewed it yet)~~ DONE
+- ~~Transactions struct and Merkle root~~ DONE
+- ~~Persistence (save/load chain)~~ DONE
+
+## 2026-03-22
+
+**Session goal**: Review validate_chain, implement transactions + Merkle root, refactor to interactive menu loop, add difficulty adjustment and persistence.
+
+**What I learned (blockchain)**:
+- Reviewed validate_chain's 3 checks: hash integrity, chain linking, proof of work — and why all three together matter (each alone is bypassable, combined they force re-mining)
+- Merkle trees: hash pairs of transactions recursively until one root hash remains
+- SPV (Simplified Payment Verification): lightweight wallets use Merkle proofs to verify a transaction is in a block with just log2(N) hashes instead of downloading all transactions
+- COINBASE transaction: special tx with no sender, creates new coins as mining reward — this is how new Bitcoin enters circulation
+- Pending transaction pool: transactions wait in a pool until a miner includes them in a block — you can't spend unconfirmed coins
+- Difficulty adjustment: if blocks mine too fast, increase difficulty; too slow, decrease. Our toy chain checks every block, Bitcoin checks every 2016 blocks
+
+**What I learned (Rust)**:
+- `f64` — 64-bit floating point (real Bitcoin uses integer satoshis to avoid rounding)
+- `vec![]` macro — creates a Vec with initial values, shorthand for Vec::new() + push()
+- Closures: `|tx| hash_transaction(tx)` — anonymous functions. Chose to use a for loop instead for now (TODO: come back and learn .iter().map().collect() pattern)
+- `.drain(..)` — removes all elements from a Vec and returns them (ownership transfer)
+- `.parse()` — converts a string to another type, returns Result
+- `.unwrap_or(default)` — unwrap a Result, use default if it fails
+- `.to_string()` — converts &str to owned String
+- `continue` — skip rest of loop body, jump to top
+- `break` — exit the loop
+- `if let Some(prev) = previous_block` — pattern matching on Option, safer than .unwrap()
+- `Option<&Block>` — a reference that might not exist (Some or None)
+- `#[derive(Serialize, Deserialize)]` — auto-generate trait implementations for converting structs to/from YAML
+- `fs::write` / `fs::read_to_string` — file I/O
+- `serde_yaml::to_string` / `serde_yaml::from_str` — serialize/deserialize structs
+
+**What I built**:
+- `Transaction` struct: sender, recipient, amount
+- `hash_transaction` — SHA256 a single transaction for Merkle tree leaves
+- `merkle_root` — recursively hash pairs of transaction hashes into a single root
+- Updated `Block` struct: replaced `data: String` with `transactions: Vec<Transaction>` and `merkle_root: String`
+- Updated `hash_block` to use merkle_root instead of data
+- `read_transaction` — interactive transaction input from stdin
+- `validate_transaction` — checks sender has enough balance (with COINBASE exemption)
+- `get_balance` — walks chain summing received/sent amounts per address
+- `verify_hash` — extracted from validate_chain: recompute and compare a block's hash
+- `validate_block` — extracted from validate_chain: checks integrity, linking, and proof of work for a single block
+- Refactored `validate_chain` to use the extracted functions
+- `adjust_difficulty` — increases/decreases difficulty based on mining time vs 5s target
+- `save_chain` — serialize chain to YAML with serde
+- `load_chain` — deserialize chain from YAML, auto-validates on load
+- Refactored `main` into a persistent menu loop with shared chain, difficulty, and pending transaction pool
+
+**Decisions made**:
+- Simple balance model (sum sent/received) instead of full UTXO — good enough for learning
+- Difficulty adjustment every block (not every 2016) for faster feedback
+- 5 second target block time for the toy chain
+- Added serde + serde_yaml dependencies for persistence
+
+**Next session**:
+- Full top-to-bottom code review and quiz on blockchain + Rust concepts
+- Consider: push to GitHub

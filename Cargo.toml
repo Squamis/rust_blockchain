@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 sha2 = "0.10"       # SHA256 hashing (same crate as wallet project)
 hex = "0.4"         # encode hash bytes as hex strings
+serde = { version = "1", features = ["derive"] }  # serialization framework
+serde_yaml = "0.9"  # YAML format for save/load
