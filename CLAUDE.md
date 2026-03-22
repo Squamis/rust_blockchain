@@ -11,14 +11,14 @@ Learning project — Thomas is building a toy blockchain to understand how Bitco
 
 ## Architecture
 
-CLI tool with 5 function groups, ~14 core functions:
+CLI tool with interactive menu loop. All functions implemented:
 
 ```
-Hashing:          hash_block, verify_hash, merkle_root
+Hashing:          hash_block, hash_transaction, verify_hash, merkle_root
 Blocks:           create_genesis_block, create_block, validate_block
-Chain:            add_block, validate_chain, get_chain_length
+Chain:            view_chain, validate_chain
 Mining:           mine_block (proof of work), adjust_difficulty
-Transactions:     create_transaction, validate_transaction, get_balance
+Transactions:     read_transaction, validate_transaction, get_balance
 Persistence:      save_chain, load_chain
 ```
 
@@ -71,20 +71,51 @@ struct Transaction {
 }
 ```
 
-## Next steps (in order)
-1. Implement hashing — SHA256 a block, understand the avalanche effect
-2. Build Block struct and create_genesis_block
-3. Implement create_block and chain linking (previous_hash)
-4. Add proof of work mining (find nonce that gives N leading zeros)
-5. Add transactions and merkle root
-6. Chain validation
-7. Persistence (save/load)
+## Status (as of 2026-03-22)
 
-## Dependencies (planned)
-- `sha2` — SHA256 hashing (already used in wallet project)
-- `serde` + `serde_yaml` — serialization (already used in wallet project)
-- `hex` — hex encoding hashes (already used in wallet project)
+All 4 phases complete. All core functions implemented and tested.
+
+## Next session plan
+
+**Full top-to-bottom code review + quiz on both blockchain and Rust concepts.**
+
+### Blockchain concepts to quiz (7 topics):
+1. Hashing — SHA256, avalanche effect, why it makes chains tamper-evident
+2. Block structure — what each field does and why it's there
+3. Genesis block — why it's special
+4. Chain linking — how previous_hash creates the chain
+5. Proof of work — the mining puzzle, difficulty, nonce brute-forcing
+6. Merkle trees — how they compress transactions into one root, SPV proofs
+7. Transactions — pending pool, COINBASE rewards, balance model, validation
+
+### Rust concepts to quiz (15+ topics):
+1. Ownership & borrowing (`String` vs `&str`, `&Block`, `.clone()`)
+2. Structs & field init shorthand
+3. `Vec<T>` — dynamic arrays, `.push()`, `.last()`, `.drain()`
+4. `Option<T>` — None instead of null, `.unwrap()`, `if let Some`
+5. `match` — pattern matching
+6. Traits — `Digest`, `Serialize`, `Deserialize`
+7. `#[derive(...)]` — auto-generating trait implementations
+8. `loop`, `break`, `continue`
+9. Tuples — returning multiple values `(u64, String)`
+10. `for` loops — ranges (`0..n`), iterating over references
+11. Closures (preview) — `|x| ...` syntax, `.map()`, `.collect()` (TODO: Thomas deferred learning this)
+12. String methods — `.parse()`, `.trim()`, `.starts_with()`, `.repeat()`
+13. `f64`, `u64`, `usize` — when to use which numeric type
+14. File I/O — `fs::write`, `fs::read_to_string`
+15. Serde — serialization/deserialization to YAML
+
+### Quiz format:
+- Go function by function through main.rs
+- Mix conceptual ("why does X exist?") with code-reading ("what does this line do?")
+- Thomas should be able to explain each function's purpose and the Rust mechanics it uses
+
+## Dependencies
+- `sha2` — SHA256 hashing
+- `hex` — hex encoding hashes
+- `serde` + `serde_yaml` — serialization for save/load
 
 ## Dev environment
 - Rust edition 2024
+- LazyVim with rust-analyzer LSP (installed 2026-03-22)
 - No sudo access — all tools installed to user space
